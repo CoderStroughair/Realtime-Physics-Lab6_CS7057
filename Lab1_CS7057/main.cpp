@@ -77,6 +77,7 @@ void init()
 	bear.init(BEAR_MESH, BEAR_TEXTURE, NULL);
 	cubeMapID.initCubeMap(vertices, 36, "desert");
 	t = TetrahedralisedMesh(cubeID, vec3(0.0, 0.0, 0.0));
+	t.BreakOffTetrahedrals();
 }
 
 void display() 
@@ -106,7 +107,7 @@ void updateScene() {
 		delta = 0.03f;
 		last_frame = curr_time;
 
-		t.update();
+		//t.update();
 		cam.movForward(frontCam*speed);
 		cam.movRight(sideCam*speed);
 		cam.changeFront(pitCam, yawCam, rolCam);
@@ -336,6 +337,5 @@ void drawloop(mat4 view, mat4 proj, GLuint framebuffer)
 	drawCubeMap(cubeMapShaderID, cubeMapID.tex, view, proj, model, vec3(1.0, 1.0, 1.0), vec3(1.0, 1.0, 1.0), cam, cubeMapID, GL_TRIANGLES);
 
 	//drawObject(noTextureShaderID, view, proj, model, light, Ls, La, Ld, Ks, BLUE, Ka, specular_exponent, cam, cubeID, coneAngle, coneDirection, GL_TRIANGLES);
-	
 	t.Draw(model, view, proj, noTextureShaderID, cam);
 }

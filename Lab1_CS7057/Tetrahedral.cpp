@@ -32,10 +32,11 @@ TetrahedralisedMesh::TetrahedralisedMesh(SingleMesh mesh, vec3 p)
 
 void TetrahedralisedMesh::CalculateTetrahedrals()
 {
-	//vertices are currently set up as faces, so there's loads of duplicates, exactly what I need
+	tetrahedrals.clear();
 	for (int i = 0; i < base.mesh_indice_count; i = i + 3)
 	{
 		Tetrahedral t;
+
 		t.w.push_back(&position.v[0]);
 		t.w.push_back(&position.v[1]);
 		t.w.push_back(&position.v[2]);
@@ -53,13 +54,13 @@ void TetrahedralisedMesh::CalculateTetrahedrals()
 		t.z.push_back(&base.newpoints[base.indices[i] * 3 + 8]);
 
 		tetrahedrals.push_back(t);
-		//I will need to generate proper meshes later for these
 	}
 }
 
 void TetrahedralisedMesh::update()
 {
-	CalculateTetrahedrals();
+	if(!drawTetra)
+		CalculateTetrahedrals();
 }
 
 void TetrahedralisedMesh::BreakOffTetrahedrals()
@@ -104,6 +105,20 @@ void TetrahedralisedMesh::BreakOffTetrahedrals()
 		tetrahedrals[i].t.indices.push_back(0);
 		tetrahedrals[i].t.indices.push_back(1);
 		tetrahedrals[i].t.indices.push_back(3);
+
+		glGenVertexArrays(1, &tetrahedrals[i].t.VAO[0]);
+		glBindVertexArray(tetrahedrals[i].t.VAO[0]);
+		GLuint vbo, ebo;
+		glGenBuffers(1, &vbo);
+		glGenBuffers(1, &ebo);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBufferData(GL_ARRAY_BUFFER, tetrahedrals[i].t.mesh_vertex_count * 3 * sizeof(GLfloat), tetrahedrals[i].t.initialpoints.data(), GL_STATIC_DRAW);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, tetrahedrals[i].t.mesh_indice_count * sizeof(GLuint), tetrahedrals[i].t.indices.data(), GL_STATIC_DRAW);
+
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), NULL);
+		glEnableVertexAttribArray(0);
 	}	
 }
 
@@ -122,6 +137,8 @@ void TetrahedralisedMesh::Draw(mat4 model, mat4 view, mat4 proj, GLuint shaderID
 	vec3 Kd = vec3(0.0f, 1.0f, 0.0f);
 	vec3 Ka = vec3(0.0f, 1.0f, 0.0f)*0.2; // ambient reflectance
 	float exp = 100.0f; //specular exponent - size of the specular elements
+
+	mat4 newModel = translate(model, vec3(0, 0, 0));
 
 	glUniformMatrix4fv(glGetUniformLocation(shaderID, "view"), 1, GL_FALSE, view.m);
 	glUniformMatrix4fv(glGetUniformLocation(shaderID, "proj"), 1, GL_FALSE, proj.m);
@@ -148,11 +165,11 @@ void TetrahedralisedMesh::Draw(mat4 model, mat4 view, mat4 proj, GLuint shaderID
 	{
 		for (int i = 0; i < tetrahedrals.size(); i++)
 		{
+			//newModel = translate(newModel, vec3(2, 2, 0));
+			//glUniformMatrix4fv(glGetUniformLocation(shaderID, "model"), 1, GL_FALSE, newModel.m);
 			glBindVertexArray(tetrahedrals[i].t.VAO[0]);
-			if (!tetrahedrals[i].t.converted)
-				glDrawArrays(GL_TRIANGLES, 0, tetrahedrals[i].t.mesh_vertex_count);
-			else
-				glDrawElements(GL_TRIANGLES, tetrahedrals[i].t.mesh_indice_count, GL_UNSIGNED_INT, 0);
+			glDrawElements(GL_TRIANGLES, tetrahedrals[i].t.mesh_indice_count, GL_UNSIGNED_INT, 0);
+			glBindVertexArray(0);
 		}
 	}
 }
