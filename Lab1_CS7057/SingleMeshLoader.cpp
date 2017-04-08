@@ -312,15 +312,15 @@ bool SingleMesh::update_mesh(mat4 orientation, vec3 position)
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), NULL);
 		glEnableVertexAttribArray(0);
 
-		GLuint vbo1, ebo1;
-		glGenBuffers(1, &vbo1);
-		glGenBuffers(1, &ebo1);
-		glBindBuffer(GL_ARRAY_BUFFER, vbo1);
-		glBufferData(GL_ARRAY_BUFFER, mesh_vertex_count * 3 * sizeof(GLfloat), newnormals.data(), GL_STATIC_DRAW);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo1);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh_indice_count * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), NULL);
-		glEnableVertexAttribArray(1);
+		//GLuint vbo1, ebo1;
+		//glGenBuffers(1, &vbo1);
+		//glGenBuffers(1, &ebo1);
+		//glBindBuffer(GL_ARRAY_BUFFER, vbo1);
+		//glBufferData(GL_ARRAY_BUFFER, mesh_vertex_count * 3 * sizeof(GLfloat), newnormals.data(), GL_STATIC_DRAW);
+		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo1);
+		//glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh_indice_count * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
+		//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), NULL);
+		//glEnableVertexAttribArray(1);
 	}
 	return true;
 }
@@ -522,5 +522,7 @@ void SingleMesh::convertMesh()		//removes the extra vertices from the mesh, leav
 	glBindVertexArray(0);
 	converted = true;
 
+	newpoints = initialpoints;
+	newnormals = initialnormals;
 
 }

@@ -2,13 +2,13 @@
 
 void print(Tetrahedral t)
 {
-	cout << "[" << *t.w[0] << "," << *t.w[1] << "," << *t.w[2] << "]\n";
+	cout << "[" << t.w[0] << "," << t.w[1] << "," << t.w[2] << "]\n";
 
-	cout << "[" << *t.x[0] << "," << *t.x[1] << "," << *t.x[2] << "]\n";
+	cout << "[" << t.x[0] << "," << t.x[1] << "," << t.x[2] << "]\n";
+	
+	cout << "[" << t.y[0] << "," << t.y[1] << "," << t.y[2] << "]\n";
 
-	cout << "[" << *t.y[0] << "," << *t.y[1] << "," << *t.y[2] << "]\n";
-
-	cout << "[" << *t.z[0] << "," << *t.z[1] << "," << *t.z[2] << "]\n";
+	cout << "[" << t.z[0] << "," << t.z[1] << "," << t.z[2] << "]\n";
 }
 
 void print(vector<Tetrahedral> t)
@@ -36,22 +36,29 @@ void TetrahedralisedMesh::CalculateTetrahedrals()
 	for (int i = 0; i < base.mesh_indice_count; i = i + 3)
 	{
 		Tetrahedral t;
+		if (base.indices[i] == 5)
+		{
+			cout << "";
+		}
+		t.w.push_back(0);
+		t.w.push_back(0);
+		t.w.push_back(0);
 
-		t.w.push_back(&position.v[0]);
-		t.w.push_back(&position.v[1]);
-		t.w.push_back(&position.v[2]);
+		t.x.push_back(base.initialpoints[base.indices[i] * 3]);
+		t.x.push_back(base.initialpoints[base.indices[i] * 3 + 1]);
+		t.x.push_back(base.initialpoints[base.indices[i] * 3 + 2]);
 
-		t.x.push_back(&base.newpoints[base.indices[i]*3]);
-		t.x.push_back(&base.newpoints[base.indices[i]*3+1]);
-		t.x.push_back(&base.newpoints[base.indices[i]*3+2]);
+		t.y.push_back(base.initialpoints[base.indices[i+1] * 3]);
+		t.y.push_back(base.initialpoints[base.indices[i+1] * 3 + 1]);
+		t.y.push_back(base.initialpoints[base.indices[i+1] * 3 + 2]);
 
-		t.y.push_back(&base.newpoints[base.indices[i] * 3 + 3]);
-		t.y.push_back(&base.newpoints[base.indices[i] * 3 + 4]);
-		t.y.push_back(&base.newpoints[base.indices[i] * 3 + 5]);
+		t.z.push_back(base.initialpoints[base.indices[i+2] * 3]);
+		t.z.push_back(base.initialpoints[base.indices[i+2] * 3 + 1]);
+		t.z.push_back(base.initialpoints[base.indices[i+2] * 3 + 2]);
 
-		t.z.push_back(&base.newpoints[base.indices[i] * 3 + 6]);
-		t.z.push_back(&base.newpoints[base.indices[i] * 3 + 7]);
-		t.z.push_back(&base.newpoints[base.indices[i] * 3 + 8]);
+		//cout << base.indices[i] << ", ";
+
+		print(t);
 
 		tetrahedrals.push_back(t);
 	}
@@ -59,8 +66,8 @@ void TetrahedralisedMesh::CalculateTetrahedrals()
 
 void TetrahedralisedMesh::update()
 {
-	if(!drawTetra)
-		CalculateTetrahedrals();
+	//if(!drawTetra)
+		//CalculateTetrahedrals();
 }
 
 void TetrahedralisedMesh::BreakOffTetrahedrals()
@@ -69,21 +76,21 @@ void TetrahedralisedMesh::BreakOffTetrahedrals()
 
 	for (int i = 0; i < tetrahedrals.size(); i++)
 	{
-		tetrahedrals[i].t.initialpoints.push_back(*tetrahedrals[i].w[0]);
-		tetrahedrals[i].t.initialpoints.push_back(*tetrahedrals[i].w[1]);
-		tetrahedrals[i].t.initialpoints.push_back(*tetrahedrals[i].w[2]);
+		tetrahedrals[i].t.initialpoints.push_back(tetrahedrals[i].w[0]);
+		tetrahedrals[i].t.initialpoints.push_back(tetrahedrals[i].w[1]);
+		tetrahedrals[i].t.initialpoints.push_back(tetrahedrals[i].w[2]);
 
-		tetrahedrals[i].t.initialpoints.push_back(*tetrahedrals[i].x[0]);
-		tetrahedrals[i].t.initialpoints.push_back(*tetrahedrals[i].x[1]);
-		tetrahedrals[i].t.initialpoints.push_back(*tetrahedrals[i].x[2]);
+		tetrahedrals[i].t.initialpoints.push_back(tetrahedrals[i].x[0]);
+		tetrahedrals[i].t.initialpoints.push_back(tetrahedrals[i].x[1]);
+		tetrahedrals[i].t.initialpoints.push_back(tetrahedrals[i].x[2]);
 
-		tetrahedrals[i].t.initialpoints.push_back(*tetrahedrals[i].y[0]);
-		tetrahedrals[i].t.initialpoints.push_back(*tetrahedrals[i].y[1]);
-		tetrahedrals[i].t.initialpoints.push_back(*tetrahedrals[i].y[2]);
+		tetrahedrals[i].t.initialpoints.push_back(tetrahedrals[i].y[0]);
+		tetrahedrals[i].t.initialpoints.push_back(tetrahedrals[i].y[1]);
+		tetrahedrals[i].t.initialpoints.push_back(tetrahedrals[i].y[2]);
 
-		tetrahedrals[i].t.initialpoints.push_back(*tetrahedrals[i].z[0]);
-		tetrahedrals[i].t.initialpoints.push_back(*tetrahedrals[i].z[1]);
-		tetrahedrals[i].t.initialpoints.push_back(*tetrahedrals[i].z[2]);
+		tetrahedrals[i].t.initialpoints.push_back(tetrahedrals[i].z[0]);
+		tetrahedrals[i].t.initialpoints.push_back(tetrahedrals[i].z[1]);
+		tetrahedrals[i].t.initialpoints.push_back(tetrahedrals[i].z[2]);
 
 		tetrahedrals[i].t.newpoints = tetrahedrals[i].t.initialpoints;
 
@@ -125,7 +132,6 @@ void TetrahedralisedMesh::BreakOffTetrahedrals()
 void TetrahedralisedMesh::Draw(mat4 model, mat4 view, mat4 proj, GLuint shaderID, EulerCamera cam)
 {
 	glUseProgram(shaderID);
-
 	vec3 Ls = vec3(0.6f, 0.3f, 0.6f);	//Specular Reflected Light
 	vec3 Ld = vec3(0.8f, 0.8f, 0.8f);	//Diffuse Surface Reflectance
 	vec3 La = vec3(0.8f, 0.8f, 0.8f);	//Ambient Reflected Light
@@ -165,7 +171,7 @@ void TetrahedralisedMesh::Draw(mat4 model, mat4 view, mat4 proj, GLuint shaderID
 	{
 		for (int i = 0; i < tetrahedrals.size(); i++)
 		{
-			//newModel = translate(newModel, vec3(2, 2, 0));
+			//newModel = translate(newModel, vec3(1, 0, 0));
 			//glUniformMatrix4fv(glGetUniformLocation(shaderID, "model"), 1, GL_FALSE, newModel.m);
 			glBindVertexArray(tetrahedrals[i].t.VAO[0]);
 			glDrawElements(GL_TRIANGLES, tetrahedrals[i].t.mesh_indice_count, GL_UNSIGNED_INT, 0);

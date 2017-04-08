@@ -5,15 +5,10 @@
 
 struct Tetrahedral
 {
-	vector<GLfloat*> w = vector<GLfloat*>();
-	vector<GLfloat*> x = vector<GLfloat*>();
-	vector<GLfloat*> y = vector<GLfloat*>();
-	vector<GLfloat*> z = vector<GLfloat*>();
-
-	vector<GLfloat*> face_n1 = vector<GLfloat*>();
-	vector<GLfloat*> face_n2 = vector<GLfloat*>();
-	vector<GLfloat*> face_n3 = vector<GLfloat*>();
-	vector<GLfloat*> face_n4 = vector<GLfloat*>();
+	vector<GLfloat> w = vector<GLfloat>();
+	vector<GLfloat> x = vector<GLfloat>();
+	vector<GLfloat> y = vector<GLfloat>();
+	vector<GLfloat> z = vector<GLfloat>();
 
 	SingleMesh t;
 };
