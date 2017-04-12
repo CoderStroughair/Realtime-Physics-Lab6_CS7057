@@ -30,6 +30,7 @@ struct vec4;
 struct mat3;
 struct mat4;
 struct versor;
+struct mat4x3;
 
 // print functions
 void print (const vec2& v);
@@ -41,13 +42,18 @@ void print (const versor& q);
 // vector functions
 float length (const vec3& v);
 float length2 (const vec3& v);
+float length(const vec4& v);
 vec3 normalise (const vec3& v);
+vec4 normalise(const vec4& v);
 float dot (const vec3& a, const vec3& b);
+float dot(const vec4& a, const vec4& b);
 inline vec3 cross (const vec3& a, const vec3& b);
 inline float get_squared_dist (vec3 from, vec3 to);
 inline vec3 multiply(const mat4& a, const vec3& b);
 float direction_to_heading (vec3 d);
 vec3 heading_to_direction (float degrees);
+float scalarTripleProduct(vec3 a, vec3 b, vec3 c);
+vec4 projection(const vec4& a, const vec4& b);
 // matrix functions
 mat3 zero_mat3 ();
 mat3 identity_mat3 ();
@@ -56,6 +62,11 @@ mat4 identity_mat4 ();
 float determinant (const mat4& mm);
 mat4 inverse (const mat4& mm);
 mat4 transpose (const mat4& mm);
+void matrixMultiply(const float a[], const float b[], float result[]);
+mat3 matrixMultiply(const vec3& a, const vec3& b);
+mat4 matrixMultiply(const vec4& a, const vec4& b);
+mat4 qrDecomposition(mat4 a);
+mat4 GMqrDecomposition(mat4 a);
 // affine functions
 mat4 translate (const mat4& m, const vec3& v);
 mat4 rotate_x_deg (const mat4& m, float deg);
@@ -215,6 +226,33 @@ struct vec4 {
 		v[3] = w;
 	}
 	float v[4];
+
+	vec4 operator- (const vec4& rhs) {
+		vec4 vc;
+		vc.v[0] = v[0] - rhs.v[0];
+		vc.v[1] = v[1] - rhs.v[1];
+		vc.v[2] = v[2] - rhs.v[2];
+		vc.v[3] = v[3] - rhs.v[3];
+		return vc;
+	}
+
+	vec4 operator+ (const vec4& rhs) {
+		vec4 vc;
+		vc.v[0] = v[0] + rhs.v[0];
+		vc.v[1] = v[1] + rhs.v[1];
+		vc.v[2] = v[2] + rhs.v[2];
+		vc.v[3] = v[3] + rhs.v[3];
+		return vc;
+	}
+
+	vec4 operator* (float rhs) {
+		vec4 vc;
+		vc.v[0] = v[0] * rhs;
+		vc.v[1] = v[1] * rhs;
+		vc.v[2] = v[2] * rhs;
+		vc.v[3] = v[3] * rhs;
+		return vc;
+	}
 };
 
 /* stored like this:
@@ -238,6 +276,36 @@ struct mat3 {
 		m[8] = i;
 	}
 	float m[9];
+
+	mat3& operator- (const mat3& rhs)
+	{
+		this->m[0] -= rhs.m[0];
+		this->m[1] -= rhs.m[1];
+		this->m[2] -= rhs.m[2];
+		this->m[3] -= rhs.m[3];
+		this->m[4] -= rhs.m[4];
+		this->m[5] -= rhs.m[5];
+		this->m[6] -= rhs.m[6];
+		this->m[7] -= rhs.m[7];
+		this->m[8] -= rhs.m[8];
+		return *this;
+	}
+
+	mat3 operator* (const mat3& rhs) {
+		mat3 r = zero_mat3();
+		int r_index = 0;
+		for (int col = 0; col < 3; col++) {
+			for (int row = 0; row < 3; row++) {
+				float sum = 0.0f;
+				for (int i = 0; i < 3; i++) {
+					sum += rhs.m[i + col * 3] * m[row + i * 3];
+				}
+				r.m[r_index] = sum;
+				r_index++;
+			}
+		}
+		return r;
+	}
 };
 
 /* stored like this:
@@ -268,6 +336,27 @@ struct mat4 {
 		m[14] = o;
 		m[15] = p;
 	}
+
+	mat4(vec4 a, vec4 b, vec4 c, vec4 d)
+	{
+		m[0] = a.v[0];
+		m[1] = a.v[1];
+		m[2] = a.v[2];
+		m[3] = a.v[3];
+		m[4] = b.v[0];
+		m[5] = b.v[1];
+		m[6] = b.v[2];
+		m[7] = b.v[3];
+		m[8] = c.v[0];
+		m[9] = c.v[1];
+		m[10] = c.v[2];
+		m[11] = c.v[3];
+		m[12] = d.v[0];
+		m[13] = d.v[1];
+		m[14] = d.v[2];
+		m[15] = d.v[3];
+	}
+
 	vec4 operator* (const vec4& rhs) {
 		// 0x + 4y + 8z + 12w
 		float x =
@@ -313,6 +402,27 @@ struct mat4 {
 		for (int i = 0; i < 16; i++) {
 			m[i] = rhs.m[i];
 		}
+		return *this;
+	}
+
+	mat4& operator- (const mat4& rhs) 
+	{
+		this->m[0] -= rhs.m[0];
+		this->m[1] -= rhs.m[1];
+		this->m[2] -= rhs.m[2];
+		this->m[3] -= rhs.m[3];
+		this->m[4] -= rhs.m[4];
+		this->m[5] -= rhs.m[5];
+		this->m[6] -= rhs.m[6];
+		this->m[7] -= rhs.m[7];
+		this->m[8] -= rhs.m[8];
+		this->m[9] -= rhs.m[9];
+		this->m[10] -= rhs.m[10];
+		this->m[11] -= rhs.m[11];
+		this->m[12] -= rhs.m[12];
+		this->m[13] -= rhs.m[13];
+		this->m[14] -= rhs.m[14];
+		this->m[15] -= rhs.m[15];
 		return *this;
 	}
 
@@ -409,6 +519,10 @@ inline float length (const vec3& v) {
 	return sqrt (v.v[0] * v.v[0] + v.v[1] * v.v[1] + v.v[2] * v.v[2]);
 }
 
+inline float length(const vec4& v) {
+	return sqrt(v.v[0] * v.v[0] + v.v[1] * v.v[1] + v.v[2] * v.v[2] + v.v[3] * v.v[3]);
+}
+
 // squared length
 inline float length2 (const vec3& v) {
 	return v.v[0] * v.v[0] + v.v[1] * v.v[1] + v.v[2] * v.v[2];
@@ -427,8 +541,25 @@ inline vec3 normalise (const vec3& v) {
 	return vb;
 }
 
+inline vec4 normalise(const vec4& v) {
+	vec4 vb;
+	float l = length(v);
+	if (0.0f == l) {
+		return vec4(0.0f, 0.0f, 0.0f, 0.0f);
+	}
+	vb.v[0] = v.v[0] / l;
+	vb.v[1] = v.v[1] / l;
+	vb.v[2] = v.v[2] / l;
+	vb.v[3] = v.v[3] / l;
+	return vb;
+}
+
 inline float dot (const vec3& a, const vec3& b) {
 	return a.v[0] * b.v[0] + a.v[1] * b.v[1] + a.v[2] * b.v[2];
+}
+
+inline float dot(const vec4& a, const vec4& b) {
+	return a.v[0] * b.v[0] + a.v[1] * b.v[1] + a.v[2] * b.v[2] + a.v[3] * b.v[3];
 }
 
 inline vec3 cross (const vec3& a, const vec3& b) {
@@ -463,6 +594,16 @@ inline float direction_to_heading (vec3 d) {
 inline vec3 heading_to_direction (float degrees) {
 	float rad = degrees * ONE_DEG_IN_RAD;
 	return vec3 (-sinf (rad), 0.0f, -cosf (rad));
+}
+
+inline float scalarTripleProduct(vec3 a, vec3 b, vec3 c)
+{
+	return dot(cross(a, b), c);
+}
+
+inline vec4 projection(const vec4& a, const vec4& b)
+{
+	return normalise(a) * (dot(a, b) / dot(a, a));
 }
 
 /*-----------------------------MATRIX FUNCTIONS-------------------------------*/
@@ -642,6 +783,148 @@ inline mat4 transpose (const mat4& mm) {
 		mm.m[2], mm.m[6], mm.m[10], mm.m[14],
 		mm.m[3], mm.m[7], mm.m[11], mm.m[15]
 	);
+}
+
+inline void matrixMultiply(float a[2], float b[2], float result[4])
+{
+	result[0] = a[0] * b[0];
+	result[1] = a[1] * b[0];
+	result[2] = a[0] * b[1];
+	result[3] = a[1] * b[1];
+}
+
+inline mat3 matrixMultiply(const vec3& a, const vec3& b)
+{
+	mat3 m;
+	m.m[0] = a.v[0] * b.v[0];
+	m.m[1] = a.v[1] * b.v[0];
+	m.m[2] = a.v[2] * b.v[0];
+	m.m[3] = a.v[0] * b.v[1];
+	m.m[4] = a.v[1] * b.v[1];
+	m.m[5] = a.v[2] * b.v[1];
+	m.m[6] = a.v[0] * b.v[2];
+	m.m[7] = a.v[1] * b.v[2];
+	m.m[8] = a.v[2] * b.v[2];
+	return m;
+}
+
+inline mat4 matrixMultiply(const vec4& a, const vec4& b)
+{
+	mat4 m;
+	m.m[0] = a.v[0] * b.v[0];
+	m.m[1] = a.v[1] * b.v[0];
+	m.m[2] = a.v[2] * b.v[0];
+	m.m[3] = a.v[3] * b.v[0];
+	m.m[4] = a.v[0] * b.v[1];
+	m.m[5] = a.v[1] * b.v[1];
+	m.m[6] = a.v[2] * b.v[1];
+	m.m[7] = a.v[3] * b.v[1];
+	m.m[8] = a.v[0] * b.v[2];
+	m.m[9] = a.v[1] * b.v[2];
+	m.m[10] = a.v[2] * b.v[2];
+	m.m[11] = a.v[3] * b.v[2];
+	m.m[12] = a.v[0] * b.v[3];
+	m.m[13] = a.v[1] * b.v[3];
+	m.m[14] = a.v[2] * b.v[3];
+	m.m[15] = a.v[3] * b.v[3];
+
+	return m;
+}
+
+inline mat4 qrDecomposition(mat4 a)
+{
+	vec4 x = vec4(a.m[0], a.m[1], a.m[2], a.m[3]);
+	float alpha = length(x);
+	vec4 e1 = vec4(alpha, 0, 0, 0);
+	vec4 u = x - e1;
+	vec4 v = normalise(u);
+	mat4 Q1 = identity_mat4() - matrixMultiply(v, v) - matrixMultiply(v, v);
+	mat4 Q1A = Q1 * a;
+	print(Q1A);
+	mat3 A_ = mat3
+	(	Q1A.m[5], Q1A.m[6], Q1A.m[7],
+		Q1A.m[9], Q1A.m[10], Q1A.m[11],
+		Q1A.m[13], Q1A.m[14], Q1A.m[15]);
+	
+	vec3 x2 = vec3(A_.m[0], A_.m[1], A_.m[2]);
+	vec3 e2 = vec3(1, 0, 0);
+	float alpha2 = length(x2);
+	vec3 u2 = x2 - e2 * alpha2;
+	vec3 v2 = normalise(u2);
+	mat3 Q2_ = identity_mat3() - matrixMultiply(v2, v2)- matrixMultiply(v2, v2);
+	mat4 Q2 = mat4
+	(	1, 0, 0, 0,
+		0, Q2_.m[0], Q2_.m[1], Q2_.m[2],
+		0, Q2_.m[3], Q2_.m[4], Q2_.m[5],
+		0, Q2_.m[6], Q2_.m[7], Q2_.m[8]);
+	mat4 Q2Q1A = Q2 * Q1A;
+	print(Q2Q1A);
+	float A_2[4] = { Q2Q1A.m[10], Q2Q1A.m[11], Q2Q1A.m[14], Q2Q1A.m[15] };
+
+	float x3[2] = {A_2[0], A_2[1]};
+	float e3[2] = { 1, 0 };
+	float alpha3 = sqrt(x3[0] * x3[0] + x3[1] * x3[1]);
+	float u3[2] = { x3[0] - e3[0] * alpha3, x3[1] - e3[1] * alpha3 };
+	float lenU3 = sqrt(u3[0] * u3[0] + u3[1] * u3[1]);
+	float v3[2] = { u3[0] / lenU3, u3[1] / lenU3 };
+	float Q3_[4]  = {1, 0, 1, 0};
+	float v3Mat[4] = {};
+	matrixMultiply(v3, v3, v3Mat);
+	Q3_[0] -= v3Mat[0] * 2;
+	Q3_[1] -= v3Mat[1] * 2;
+	Q3_[2] -= v3Mat[2] * 2;
+	Q3_[3] -= v3Mat[3] * 2;
+
+	mat4 Q3 = mat4
+	(	1,0,0,0,
+		0,1,0,0,
+		0,0,Q3_[0], Q3_[1],
+		0, 0, Q3_[2], Q3_[3]);
+	mat4 Q3Q2Q1A = Q3 * Q2Q1A;
+	print(Q3Q2Q1A);
+
+	mat4 Q = Q1 * Q2 * Q3;
+	print(Q * Q3Q2Q1A);
+
+	return Q3Q2Q1A;
+}
+
+inline mat4 GMqrDecomposition(mat4 a)
+{
+	vec4 a1 = vec4(a.m[0], a.m[1], a.m[2], a.m[3]);
+	vec4 a2 = vec4(a.m[4], a.m[5], a.m[6], a.m[7]);
+	vec4 a3 = vec4(a.m[8], a.m[9], a.m[10], a.m[11]);
+	vec4 a4 = vec4(a.m[12], a.m[13], a.m[14], a.m[15]);
+
+	vec4 u1 = a1;
+	vec4 u2 = a2 - projection(u1, a2);;
+	vec4 u3 = a3 - projection(u1, a3) - projection(u2, a3);
+	vec4 u4 = a4 - projection(u1, a4) - projection(u2, a4) - projection(u3, a4);
+
+	vec4 e1 = normalise(u1);
+	vec4 e2 = normalise(u2);
+	vec4 e3 = normalise(u3);
+	vec4 e4 = normalise(u4);
+
+	a1 = e1 * dot(e1, a1);
+	a2 = e1 * dot(e1, a2) + e2 * dot(e2, a2);
+	a3 = e1 * dot(e1, a3) + e2 * dot(e2, a3) + e3 * dot(e3, a3);
+	a4 = e1 * dot(e1, a4) + e2 * dot(e2, a4) + e3 * dot(e3, a4) + e4 * dot(e4, a4);
+
+	mat4 R = mat4
+	(
+		dot(e1, a1), 0, 0, 0,
+		dot(e1, a2), dot(e2, a2), 0, 0,
+		dot(e1, a3), dot(e2, a3), dot(e3, a3), 0,
+		dot(e1, a4), dot(e2, a4), dot(e3, a4), dot(e4, a4)
+	);
+
+	mat4 Q = mat4(e1, e2, e3, e4);
+
+	print(a);
+
+	print(Q * R);
+	return R;
 }
 /*--------------------------AFFINE MATRIX FUNCTIONS---------------------------*/
 // translate a 4d matrix with xyz array

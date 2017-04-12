@@ -3,7 +3,6 @@
 #include "Utilities.h"
 
 
-
 using namespace std;
 
 const float width = 900, height = 900;
@@ -60,6 +59,14 @@ void drawloop(mat4 view, mat4 proj, GLuint framebuffer);
 
 void init()
 {
+	mat4 a = mat4(12, 6, -4, 0, -51, 167, 24, 0, 4, -68, -41, 0, 6, 14, 70, 3);
+	a = scale(a, vec3(200, 14, 47));
+	a = rotate_x_deg(a, 157);
+	a = rotate_y_deg(a, 157);
+	a = rotate_z_deg(a, 157);
+	a = translate(a, vec3(3, 7, 42));
+	print(a);
+	print(qrDecomposition(a));
 	if (!init_text_rendering(atlas_image, atlas_meta, width, height)) 
 	{
 		fprintf(stderr, "error init text rendering\n");

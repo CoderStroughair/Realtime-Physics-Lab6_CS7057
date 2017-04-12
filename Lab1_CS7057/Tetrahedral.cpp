@@ -25,6 +25,7 @@ TetrahedralisedMesh::TetrahedralisedMesh() {};
 TetrahedralisedMesh::TetrahedralisedMesh(SingleMesh mesh, vec3 p) 
 {
 	position = p;
+	centerNode = p;
 	base = mesh;
 	CalculateTetrahedrals();
 	print(tetrahedrals);
@@ -36,10 +37,6 @@ void TetrahedralisedMesh::CalculateTetrahedrals()
 	for (int i = 0; i < base.mesh_indice_count; i = i + 3)
 	{
 		Tetrahedral t;
-		if (base.indices[i] == 5)
-		{
-			cout << "";
-		}
 		t.w.push_back(0);
 		t.w.push_back(0);
 		t.w.push_back(0);
@@ -56,18 +53,52 @@ void TetrahedralisedMesh::CalculateTetrahedrals()
 		t.z.push_back(base.initialpoints[base.indices[i+2] * 3 + 1]);
 		t.z.push_back(base.initialpoints[base.indices[i+2] * 3 + 2]);
 
-		//cout << base.indices[i] << ", ";
+		vec3 w = vec3(0, 0, 0);
+		vec3 x = vec3(base.initialpoints[base.indices[i] * 3], base.initialpoints[base.indices[i] * 3 + 1], base.initialpoints[base.indices[i] * 3 + 2]);
+		vec3 y = vec3(base.initialpoints[base.indices[i + 1] * 3], base.initialpoints[base.indices[i + 1] * 3 + 1], base.initialpoints[base.indices[i + 1] * 3 + 2]);
+		vec3 z = vec3(base.initialpoints[base.indices[i + 2] * 3], base.initialpoints[base.indices[i + 2] * 3 + 1], base.initialpoints[base.indices[i + 2] * 3 + 2]);
 
-		print(t);
+		t.faceA[0] = w;
+		t.faceA[1] = x;
+		t.faceA[2] = y;
 
+		t.faceA[0] = x;
+		t.faceA[1] = y;
+		t.faceA[2] = z;
+
+		t.faceA[0] = y;
+		t.faceA[1] = z;
+		t.faceA[2] = w;
+
+		t.faceA[0] = z;
+		t.faceA[1] = w;
+		t.faceA[2] = x;
+
+		//print(t);
+		t.m = glm::mat4(
+			t.w[0], t.w[1], t.w[2], 1.0,
+			t.x[0], t.x[1], t.x[2], 1.0,
+			t.y[0], t.y[1], t.y[2], 1.0,
+			t.z[0], t.z[1], t.z[2], 1.0);
+		t.mInv = inverse(t.m);
+		mat4 temp = mat4
+		(	t.mInv[0][0], t.mInv[0][1], t.mInv[0][2], t.mInv[0][3],
+			t.mInv[1][0], t.mInv[1][1], t.mInv[0][2], t.mInv[0][3],
+			t.mInv[2][0], t.mInv[2][1], t.mInv[0][2], t.mInv[0][3],
+			t.mInv[3][0], t.mInv[3][1], t.mInv[0][2], t.mInv[0][3]);
+		temp = qrDecomposition(temp);
+		t.mInv = glm::mat4
+		(	temp.m[0], temp.m[1], temp.m[2], temp.m[3],
+			temp.m[4], temp.m[5], temp.m[6], temp.m[7],
+			temp.m[8], temp.m[9], temp.m[10], temp.m[11],
+			temp.m[12], temp.m[13], temp.m[14], temp.m[15]);
 		tetrahedrals.push_back(t);
 	}
 }
 
 void TetrahedralisedMesh::update()
 {
-	//if(!drawTetra)
-		//CalculateTetrahedrals();
+	
 }
 
 void TetrahedralisedMesh::BreakOffTetrahedrals()
@@ -178,4 +209,107 @@ void TetrahedralisedMesh::Draw(mat4 model, mat4 view, mat4 proj, GLuint shaderID
 			glBindVertexArray(0);
 		}
 	}
+}
+
+void TetrahedralisedMesh::ApplyForce(vec3 point, vec3 force)
+{
+	for (int i = 0; i < tetrahedrals.size(); i++)
+	{
+		if (tetrahedrals[i].affected(point, collisionRadius))
+		{
+			cout << "I'm affected" << endl;
+			float e = 0.001;	//accuracy that we want in our Newton-Raphson Method
+			//vector<glm::vec3> 
+		}
+	}
+}
+
+//Adapted from http://stackoverflow.com/questions/38545520/barycentric-coordinates-of-a-tetrahedron
+vec4 TetrahedralisedMesh::GetBarycentricCoords(vec3 a, vec3 b, vec3 c, vec3 d, vec3 p)
+{
+	vec3 vap = p - a;
+	vec3 vbp = p - b;
+
+	vec3 vab = b - a;
+	vec3 vac = c - a;
+	vec3 vad = d - a;
+
+	vec3 vbc = c - b;
+	vec3 vbd = d - b;
+	// ScTP computes the scalar triple product
+	float va6 = scalarTripleProduct(vbp, vbd, vbc);
+	float vb6 = scalarTripleProduct(vap, vac, vad);
+	float vc6 = scalarTripleProduct(vap, vad, vab);
+	float vd6 = scalarTripleProduct(vap, vab, vac);
+	float v6 = 1 / scalarTripleProduct(vab, vac, vad);
+	return vec4(va6*v6, vb6*v6, vc6*v6, vd6*v6);
+}
+
+
+vec3 getClosestPointTriangle(vec3 triangle[3], vec3 p0)
+{
+	vec3 p1 = triangle[0];
+	vec3 p2 = triangle[1];
+	vec3 p3 = triangle[2];
+
+	//Check Each Voronoi Region
+
+	//Vertex Regions:
+
+	//p1
+	if (dot(p0 - p1, p3 - p1) <= 0 && dot(p0 - p1, p2 - p1) <= 0)
+	{
+		return p1;
+	}
+	//p2
+	if (dot(p0 - p2, p3 - p2) <= 0 && dot(p0 - p2, p1 - p2) <= 0)
+	{
+		return p2;
+	}
+	//p3
+	if (dot(p0 - p3, p2 - p3) <= 0 && dot(p0 - p3, p1 - p3) <= 0)
+	{
+		return p3;
+	}
+
+	//Edge Regions:
+
+	//<p1, p2>
+	if (dot(cross(cross(p3 - p2, p1 - p2), p1 - p2), p0 - p2) >= 0 && dot(p0 - p1, p2 - p1) >= 0 && dot(p0 - p2, p1 - p2) >= 0)
+	{
+		vec3 line[] = { p1, p2 };
+		return getClosestPointLine(line, p0);
+	}
+	// <p2, p3>
+	if (dot(cross(cross(p1 - p3, p2 - p3), p2 - p3), p0 - p3) >= 0 && dot(p0 - p2, p3 - p2) >= 0 && dot(p0 - p3, p2 - p3) >= 0)
+	{
+		vec3 line[] = { p2, p3 };
+		return getClosestPointLine(line, p0);
+	}
+	// <p3, p1>
+	if (dot(cross(cross(p2 - p1, p3 - p1), p3 - p1), p0 - p1) >= 0 && dot(p0 - p3, p1 - p3) >= 0 && dot(p0 - p1, p3 - p1) >= 0)
+	{
+		vec3 line[] = { p3, p1 };
+		return getClosestPointLine(line, p0);
+	}
+
+	//It must be the Face Region
+	return getClosestPointPlane(cross(p2, p1), p1, p0);
+}
+vec3 getClosestPointLine(vec3 line[], vec3 p0)
+{
+	vec3 u = line[1] - line[0];
+	return line[0] + normalise(u)*(dot(p0 - line[0], normalise(u)));
+}
+vec3 getClosestPointPlane(vec3 normal, vec3 p1, vec3 p0)
+{
+	normal = normalise(normal);
+	return (p0 - normal*dot((p0 - p1), normal));
+}
+float getDistance(vec3 v0, vec3 v1)
+{
+	float x_sq = (v0.v[0] - v1.v[0]) * (v0.v[0] - v1.v[0]);
+	float y_sq = (v0.v[1] - v1.v[1]) * (v0.v[1] - v1.v[1]);
+	float z_sq = (v0.v[2] - v1.v[2]) * (v0.v[2] - v1.v[2]);
+	return sqrt(x_sq + y_sq + z_sq);
 }
